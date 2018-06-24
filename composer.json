@@ -1,0 +1,39 @@
+{
+  "name": "tools4schools/PHP-SDK",
+  "authors": [
+    {
+      "name": "Timothy Seebus",
+      "email": "timothyseebus@tools4schools.org"
+    }
+  ],
+  "require": {
+    "php": ">=7.0.0",
+    "guzzlehttp/guzzle": "^6.3"
+  },
+
+  "require-dev": {
+    "phpunit/phpunit": "^7.0",
+    "orchestra/testbench-core": "3.6.*"
+  },
+
+  "autoload": {
+    "psr-4": {
+      "Tools4Schools\\SDK\\": "src/Tools4Schools"
+    }
+  },
+
+  "autoload-dev": {
+    "psr-4": {
+      "Tools4Schools\\SDK\\Tests\\": "tests/"
+    }
+  },
+
+  "extra": {
+    "branch-alias": {
+      "dev-master": "0.1-dev"
+    }
+  },
+
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
