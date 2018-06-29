@@ -10,9 +10,12 @@ namespace Tools4Schools\SDK\Graph;
 
 
 use Illuminate\Support\Str;
-use Tools4Schools\SDK\Concerns\HasAttributes;
-use Tools4Schools\SDK\Concerns\HasRelationships;
-use Tools4Schools\SDK\Request\Builder as RequestBuilder;
+use Tools4Schools\SDK\Graph\Concerns\HasAttributes;
+use Tools4Schools\SDK\Graph\Concerns\HasRelationships;
+use Tools4Schools\SDK\ConnectionInterface;
+
+use Tools4Schools\SDK\Graph\Request\Builder as GraphRequestBuilder;
+use Tools4Schools\SDK\Request\Builder as GuzzleRequestBuilder;
 
 class Model
 {
@@ -118,7 +121,9 @@ class Model
      */
     public function newRequest()
     {
-       $builder = $this->newGraphBuilder($this->newBaseRequestBuilder());
+        $builder = new GraphRequestBuilder(new GuzzleRequestBuilder($this->getConnection()));
+        // $builder = new RequestBuilder($this->getConnection());
+        //$this->newGraphBuilder($this->newBaseRequestBuilder());
         // Once we have the graphRequest builders, we will set the model instances so the
         // builder can easily access any information it may need from the model
         // while it is constructing and executing various queries against it.
@@ -126,22 +131,66 @@ class Model
     }
 
     /**
+     * Create a new Eloquent Collection instance.
+     *
+     * @param  array  $models
+     * @return \Tools4Schools\SDK\Graph\Collection
+     */
+    public function newCollection(array $models = [])
+    {
+        return new Collection($models);
+    }
+
+    /**
+     * Create a new instance of the given model.
+     *
+     * @param  array  $attributes
+     * @param  bool  $exists
+     * @return static
+     */
+    public function newInstance($attributes = [])
+    {
+        // This method just provides a convenient way for us to generate fresh model
+        // instances of this current model. It is particularly useful during the
+        // hydration of new objects via the Eloquent query builder instances.
+        $model = new static((array)$attributes);
+
+        return $model;
+    }
+
+    /**
+     * Create a new model instance that is existing.
+     *
+     * @param  array  $attributes
+     * @param  string|null  $connection
+     * @return static
+     */
+    public function newFromBuilder($attributes = [])
+    {
+        $model = $this->newInstance([]);
+        $model->setRawAttributes((array) $attributes, true);
+        //$model->setConnection($connection ?: $this->getConnectionName());
+        //$model->fireModelEvent('retrieved', false);
+        return $model;
+    }
+
+        /**
      * Create a new Graph request builder for the model.
      *
      * @param  \Tools4Schools\SDK\Request\Builder  $query
      * @return \Tools4Schools\SDK\Graph\Builder|static
      */
-    public function newGraphBuilder($query)
+ /*  public function newGraphBuilder($query)
     {
         return new Builder($query);
-    }
+    }*/
 
     /**
      * Get a new request builder instance for the connection.
      *
      * @return \Tools4Schools\SDK\Request\Builder
      */
-    protected function newBaseRequestBuilder()
+  /*  protected function newBaseRequestBuilder()
     {
         $connection = $this->getConnection();
 
@@ -152,12 +201,12 @@ class Model
         return new QueryBuilder(
             $connection, $connection->getQueryGrammar(), $connection->getPostProcessor()
         );*/
-    }
+    //}
 
     /**
      * Get the api connection for the model.
      *
-     * @return \Tools4Schools\SDK\Graph\Connection
+     * @return \Tools4Schools\SDK\Graph\ConnectionInterface
      */
     public function getConnection()
     {
@@ -174,7 +223,7 @@ class Model
         return $this->connection;
     }*/
 
-    public static function setConnection(GuzzleConnection $connection)
+    public static function setConnection(ConnectionInterface $connection)
     {
         static::$connection = $connection;
     }

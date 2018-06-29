@@ -6,12 +6,12 @@
  * Time: 18:46
  */
 
-namespace Tools4Schools\SDK\Graph;
+namespace Tools4Schools\SDK;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
-use Mockery\Exception;
+use League\OAuth2\Client\Token\AccessToken;
 use Tools4Schools\SDK\Oauth2\TokenMiddleware;
 
 class GuzzleConnection implements ConnectionInterface
@@ -45,6 +45,8 @@ class GuzzleConnection implements ConnectionInterface
      */
     protected $config = [];
 
+    protected $defaultAccessToken;
+
 
     /**
      * Create a new api connection instance.
@@ -67,6 +69,11 @@ class GuzzleConnection implements ConnectionInterface
 
         $this->config = $config;
 
+
+        if (isset($config['default_access_token'])) {
+            $this->setDefaultAccessToken($config['default_access_token']);
+        }
+
         // We need to initialize a query grammar and the query post processors
         // which are both very important parts of the database abstractions
         // so we initialize these to their default values while starting.
@@ -77,10 +84,37 @@ class GuzzleConnection implements ConnectionInterface
 
     }
 
-
-    public function send(Request $request)
+    /**
+     * Sets the default access token to use with requests.
+     *
+     * @param AccessToken|string $accessToken The access token to save.
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function setDefaultAccessToken($accessToken)
     {
-        return $this->getClient()->send($request);
+        if (is_string($accessToken)) {
+            $this->defaultAccessToken = new AccessToken(['access_token'=>$accessToken,'expires_in'=>1]);
+            return;
+        }
+        if ($accessToken instanceof AccessToken) {
+            $this->defaultAccessToken = $accessToken;
+            return;
+        }
+        throw new \InvalidArgumentException('The default access token must be of type "string" or Tools4Schools\SDK\Oauth2\AccessToken');
+    }
+
+    public function getDefaultAccessToken()
+    {
+        return $this->defaultAccessToken;
+    }
+
+
+    public function execute(Request $request)
+    {
+        //return $this->getClient()->send($request);
+        $response = $this->getClient()->send($request);
+        dd($response->getStatusCode());
     }
 
     protected function getClient()
@@ -101,7 +135,7 @@ class GuzzleConnection implements ConnectionInterface
             'handler' => $stack,
         ]);
 
-       // $stack->push(new TokenMiddleware($client, $this->config));
+        $stack->push(new TokenMiddleware($this, $this->config));
         return $client;
     }
 }

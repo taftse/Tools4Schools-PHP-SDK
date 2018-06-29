@@ -9,8 +9,9 @@
 namespace Tools4Schools\SDK;
 
 
-use Tools4Schools\SDK\Graph\GuzzleConnection;
+use Tools4Schools\SDK\GuzzleConnection;
 use Tools4Schools\SDK\Graph\Model;
+use Tools4Schools\SDK\Oauth2\AccessToken;
 use Tools4Schools\SDK\Oauth2\Client;
 
 class Tools4Schools
@@ -98,7 +99,6 @@ class Tools4Schools
 
         $this->client = new GuzzleConnection($this->getBaseApiUrl(),static::DEFAULT_API_VERSION,$this->config);
         Model::setConnection($this->client);
-        //Model::setApiVersion();
     }
 
     /**
@@ -110,6 +110,7 @@ class Tools4Schools
     {
         $this->config['enable_beta_mode'] = $betaMode;
     }
+
 
     /**
      * Returns the base api URL.

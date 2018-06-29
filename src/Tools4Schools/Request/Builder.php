@@ -10,15 +10,10 @@ namespace Tools4Schools\SDK\Request;
 
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 
-use Tools4Schools\SDK\Graph\ConnectionInterface;
+use Tools4Schools\SDK\ConnectionInterface;
 
 class Builder
 {
-    /**
-     * @var string|null The access token to use for this request.
-     */
-    protected $accessToken;
-
     /**
      * The endpoint which the request is targeting.
      *
@@ -48,7 +43,7 @@ class Builder
     /**
      * Create a new request builder instance.
      *
-     * @param  \Tools4Schools\SDK\Graph\ConnectionInterface  $connection
+     * @param  \Tools4Schools\SDK\ConnectionInterface  $connection
      * @return void
      */
     public function __construct(ConnectionInterface $connection)
@@ -77,15 +72,15 @@ class Builder
     public function get($columns = ['*'])
     {
 
-        $original = $this->columns;
+        /*$original = $this->columns;
 
         if (is_null($original)) {
             $this->columns = $columns;
         }
 
-        //$results = $this->processor->processGet($this, $this->runSelect());
-        $results = $this->send();
-        $this->columns = $original;
+        //$results = $this->processor->processGet($this, $this->runSelect());*/
+        $results = $this->send('GET');
+       // $this->columns = $original;
 
         return collect($results);
     }
@@ -95,11 +90,9 @@ class Builder
      *
      * @return array
      */
-    protected function send()
+    protected function send($method = 'GET')
     {
-        return $this->connection->send($this->getRequest('GET')
-           // $this->toSql(), $this->getBindings(), ! $this->useWritePdo
-        );
+        return $this->connection->execute($this->getRequest($method));
     }
 
     protected function getRequest($method)

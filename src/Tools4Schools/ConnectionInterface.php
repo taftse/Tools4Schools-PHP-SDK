@@ -6,10 +6,12 @@
  * Time: 18:29
  */
 
-namespace Tools4Schools\SDK\Graph;
+namespace Tools4Schools\SDK;
 
+
+use GuzzleHttp\Psr7\Request;
 
 interface ConnectionInterface
 {
-
+    public function execute(Request $request);
 }

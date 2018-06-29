@@ -23,7 +23,10 @@ class ModelsGraphModelTest extends TestCase
     {
         parent::setUp();
 
-        new Tools4Schools(['enable_beta_mode'=>true]);
+        new Tools4Schools([
+            'enable_beta_mode'=>true,
+            'default_access_token'=>$this->accessToken
+        ]);
     }
 
     public function testAttributeManipulation()
@@ -55,7 +58,7 @@ class ModelsGraphModelTest extends TestCase
         $model = new GraphModelStub;
         $model->setEndpoint('me');
         try{
-            $model->get();
+            dd($model->get());
         }catch (Exception $e)
         {
             dd($e);

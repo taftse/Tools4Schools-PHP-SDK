@@ -6,7 +6,7 @@
  * Time: 17:48
  */
 
-namespace Tools4Schools\SDK\Concerns;
+namespace Tools4Schools\SDK\Graph\Concerns;
 
 
 trait HasRelationships

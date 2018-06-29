@@ -10,14 +10,19 @@ namespace Tools4Schools\SDK\Oauth2;
 
 
 use function GuzzleHttp\Psr7\modify_request;
+
 use Psr\Http\Message\RequestInterface;
+use Tools4Schools\SDK\ConnectionInterface;
 
 class TokenMiddleware
 {
     protected $config;
-    public function __construct(\GuzzleHttp\Client $client,$config)
+
+
+    public function __construct(ConnectionInterface $connection,$config)
     {
         $this->config = $config;
+        $this->accessToken = $connection->getDefaultAccessToken();
     }
 
     public function __invoke(callable $next)
@@ -31,19 +36,25 @@ class TokenMiddleware
 
     protected function applyToken(RequestInterface $request)
     {
-        //if(!$this->hasValidToken())
+        if($this->accessToken->hasExpired())
         {
             $this->acquireAccessToken();
         }
 
         return modify_request($request,[
             'set_headers' =>[
-                'Authorization' => (string) $this->getToken(),
+                'Authorization' => 'Bearer '. $this->accessToken->getToken(),
             ]
         ]);
     }
 
-    private function acquireAccessToken()
+    protected function acquireAccessToken()
+    {
+        throw new \BadMethodCallException('Method not implemented yet.');
+    }
+
+
+    /*private function acquireAccessToken()
     {
         $parameters = $this->getTokenRequestParameters();
         $response = $this->client->request('POST', $this->config->getTokenRoute(), [
@@ -58,7 +69,7 @@ class TokenMiddleware
             $response['refresh_token']
         );
     }
-    private function getTokenRequestParameters()
+    /*private function getTokenRequestParameters()
     {
         if ($this->getToken() and $this->getToken()->isRefreshable()) {
             return [
@@ -71,5 +82,5 @@ class TokenMiddleware
             'username' => $this->config->username(),
             'password' => $this->config->password()
         ];
-    }
+    }*/
 }
