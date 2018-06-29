@@ -1,5 +1,5 @@
 {
-  "name": "tools4schools/PHP-SDK",
+  "name": "tools4schools/php-sdk",
   "authors": [
     {
       "name": "Timothy Seebus",
@@ -8,7 +8,8 @@
   ],
   "require": {
     "php": ">=7.0.0",
-    "guzzlehttp/guzzle": "^6.3"
+    "guzzlehttp/guzzle": "^6.3",
+    "illuminate/support": "^5.6"
   },
 
   "require-dev": {
@@ -24,7 +25,7 @@
 
   "autoload-dev": {
     "psr-4": {
-      "Tools4Schools\\SDK\\Tests\\": "tests/"
+      "Tools4Schools\\Tests\\SDK\\": "tests/"
     }
   },
 
