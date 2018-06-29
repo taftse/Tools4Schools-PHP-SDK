@@ -15,15 +15,17 @@ use Tools4Schools\SDK\Graph\ConnectionInterface;
 class Builder
 {
     /**
+     * @var string|null The access token to use for this request.
+     */
+    protected $accessToken;
+
+    /**
      * The endpoint which the request is targeting.
      *
      * @var string
      */
     protected $endpoint;
-    /**
-     * @var string|null The access token to use for this request.
-     */
-    protected $accessToken;
+
 
     /**
      * @var array The headers to send with this request.

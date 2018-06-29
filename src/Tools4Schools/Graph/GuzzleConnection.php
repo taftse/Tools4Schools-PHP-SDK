@@ -9,7 +9,10 @@
 namespace Tools4Schools\SDK\Graph;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
+use Mockery\Exception;
+use Tools4Schools\SDK\Oauth2\TokenMiddleware;
 
 class GuzzleConnection implements ConnectionInterface
 {
@@ -46,9 +49,9 @@ class GuzzleConnection implements ConnectionInterface
     /**
      * Create a new api connection instance.
      *
-     * @param  string   $base_url
-     * @param  string   $apiVersion
-     * @param  array    $config
+     * @param  string $base_url
+     * @param  string $apiVersion
+     * @param  array $config
      * @return void
      */
     public function __construct($base_url = '', $apiVersion = '', array $config = [])
@@ -67,7 +70,7 @@ class GuzzleConnection implements ConnectionInterface
         // We need to initialize a query grammar and the query post processors
         // which are both very important parts of the database abstractions
         // so we initialize these to their default values while starting.
-       // $this->useDefaultQueryGrammar();
+        // $this->useDefaultQueryGrammar();
 
         //$this->useDefaultPostProcessor();
 
@@ -75,84 +78,31 @@ class GuzzleConnection implements ConnectionInterface
     }
 
 
-
-
-    /**
-     * Run a get request against the api
-     *
-     * @param  string  $query
-     * @param  array  $bindings
-     * @param  bool  $useReadApi
-     * @return array
-     */
-   /* public function get($request, $bindings = [], $useReadApi = true)
-    {
-       return $this->run($request);
-
-        return $this->run($request, $bindings, function ($request, $bindings) use ($useReadPdo) {
-            if ($this->pretending()) {
-                return [];
-            }
-
-            // For select statements, we'll simply execute the query and return an array
-            // of the database result set. Each element in the array will be a single
-            // row from the database table, and will either be an array or objects.
-            $statement = $this->prepared($this->getPdoForSelect($useReadPdo)
-                ->prepare($query));
-
-            $this->bindValues($statement, $this->prepareBindings($bindings));
-
-            $statement->execute();
-
-            return $statement->fetchAll();
-        });
-    }
-
-    /**
-     * Run a SQL statement and log its execution context.
-     *
-     * @param  string    $query
-     * @param  array     $bindings
-     * @param  \Closure  $callback
-     * @return mixed
-     *
-     * @throws \Illuminate\Database\QueryException
-     */
-   /* protected function run($query, $bindings, Closure $callback)
-    {
-        $this->reconnectIfMissingConnection();
-
-        $start = microtime(true);
-
-        // Here we will run this query. If an exception occurs we'll determine if it was
-        // caused by a connection that has been lost. If that is the cause, we'll try
-        // to re-establish connection and re-run the query with a fresh connection.
-        try {
-            $result = $this->runQueryCallback($query, $bindings, $callback);
-        } catch (QueryException $e) {
-            $result = $this->handleQueryException(
-                $e, $query, $bindings, $callback
-            );
-        }
-
-        // Once we have run the query we will calculate the time that it took to run and
-        // then log the query, bindings, and execution time so we will report them on
-        // the event that the developer needs them. We'll log time in milliseconds.
-        $this->logQuery(
-            $query, $bindings, $this->getElapsedTime($start)
-        );
-
-        return $result;
-    }*/
-
-
-
     public function send(Request $request)
     {
-        $this->client = new Client([
-            'base_uri' => $this->base_url.'/'.$this->apiVersion.'/'
+        return $this->getClient()->send($request);
+    }
+
+    protected function getClient()
+    {
+        $stack = HandlerStack::create();
+
+        if(isset($this->config['middleware'])) {
+            foreach ($this->config['middleware'] as $middleware) {
+                $stack->push($middleware);
+            }
+        }
+        $client = new Client([
+            'base_uri' => $this->base_url . '/' . $this->apiVersion . '/',
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ],
+            'handler' => $stack,
         ]);
 
-        return $this->client->send($request);
+       // $stack->push(new TokenMiddleware($client, $this->config));
+        return $client;
     }
 }
+

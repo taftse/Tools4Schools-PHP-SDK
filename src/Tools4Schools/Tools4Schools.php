@@ -11,6 +11,7 @@ namespace Tools4Schools\SDK;
 
 use Tools4Schools\SDK\Graph\GuzzleConnection;
 use Tools4Schools\SDK\Graph\Model;
+use Tools4Schools\SDK\Oauth2\Client;
 
 class Tools4Schools
 {
@@ -23,6 +24,16 @@ class Tools4Schools
      * @const string Default API version for requests.
      */
     const DEFAULT_API_VERSION = 'v1';
+
+    /**
+     * @const string The name of the environment variable that contains the app ID.
+     */
+    const APP_ID_ENV_NAME = 'TOOLS4SCHOOLS_APP_ID';
+    /**
+     * @const string The name of the environment variable that contains the app secret.
+     */
+    const APP_SECRET_ENV_NAME = 'TOOLS4SCHOOLS_APP_SECRET';
+
 
     /**
      * @const string Production API URL.
@@ -45,10 +56,48 @@ class Tools4Schools
     protected $enableBetaMode = false;
 
 
-    public function __construct($accessToken,$enableBeta = false)
+    /**
+     * @var \GuzzleHttp\Client the graph client
+     */
+    protected $client;
+
+    /**
+     * @var Oauth2\Client the Oauth2 Client
+     */
+    protected $oauth2Client;
+
+    protected $config;
+
+    /**
+     * Tools4Schools constructor.
+     * @param $accessToken
+     * @param bool $enableBeta
+     */
+
+    public function __construct(array $config = [])
     {
-        $this->enableBetaMode = $enableBeta;
-        Model::setConnection(new GuzzleConnection($this->getBaseApiUrl(),static::DEFAULT_API_VERSION,['access_token'=>$accessToken]));
+        $this->config = array_merge([
+            'app_id' =>getenv(static::APP_ID_ENV_NAME),
+            'app_secret' => getenv(static::APP_SECRET_ENV_NAME),
+            'default_api_version' => static::DEFAULT_API_VERSION,
+            'enable_beta_mode' =>false,
+        ],$config);
+
+        if(!$this->config['app_id'])
+        {
+            // throw new exception
+        }
+
+        if(!$this->config['app_secret'])
+        {
+            // throw new exception
+        }
+
+
+        //$this->enableBetaMode = $enableBeta;
+
+        $this->client = new GuzzleConnection($this->getBaseApiUrl(),static::DEFAULT_API_VERSION,$this->config);
+        Model::setConnection($this->client);
         //Model::setApiVersion();
     }
 
@@ -59,7 +108,7 @@ class Tools4Schools
      */
     public function enableBetaMode($betaMode = true)
     {
-        $this->enableBetaMode = $betaMode;
+        $this->config['enable_beta_mode'] = $betaMode;
     }
 
     /**
@@ -69,6 +118,6 @@ class Tools4Schools
      */
     public function getBaseApiUrl()
     {
-        return $this->enableBetaMode ? static::BASE_API_URL_BETA : static::BASE_API_URL;
+        return $this->config['enable_beta_mode'] ? static::BASE_API_URL_BETA : static::BASE_API_URL;
     }
 }
