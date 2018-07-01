@@ -5,6 +5,10 @@ namespace Tools4Schools\SDK\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Tools4Schools\SDK\GraphClient;
+use Tools4Schools\SDK\GuzzleConnection;
+use Tools4Schools\SDK\Oauth2\Client;
+use Tools4Schools\SDK\Request\Builder;
+use Tools4Schools\SDK\Request\Processors\Processor;
 
 class Tools4SchoolsSdkTest extends TestCase
 {
@@ -17,6 +21,22 @@ class Tools4SchoolsSdkTest extends TestCase
         $response = $client->sendRequest($request);
         dd($response);
     }
+
+    function test_get_request()
+    {
+        $oauthClient = new Client([
+            'access_token' =>$this->accessToken,
+        ]);
+        $client = new GuzzleConnection([
+            'base_uri' => 'https://staging.api.tools4schools.ie/v1/',
+            'middleware' => [new \Tools4Schools\SDK\Oauth2\AuthTokenMiddleware($oauthClient)],
+        ]);
+
+        $requestBuilder = new Builder($client,new Processor());
+        $result = $requestBuilder->setEndpoint('me')->get();
+        dd($result->get());
+    }
+
 
 
 }

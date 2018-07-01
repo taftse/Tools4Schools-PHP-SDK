@@ -2,113 +2,97 @@
 /**
  * Created by PhpStorm.
  * User: Timothy
- * Date: 24/06/2018
- * Time: 19:12
+ * Date: 29/06/2018
+ * Time: 18:48
  */
 
 namespace Tools4Schools\SDK;
 
 
-use Tools4Schools\SDK\GuzzleConnection;
 use Tools4Schools\SDK\Graph\Model;
-use Tools4Schools\SDK\Oauth2\AccessToken;
-use Tools4Schools\SDK\Oauth2\Client;
+use Tools4Schools\SDK\Oauth2\AuthTokenMiddleware;
+use Tools4Schools\SDK\Oauth2\Client as Oauth2Client;
 
 class Tools4Schools
 {
     /**
-     * @const string Version number of the Tools4Schools PHP SDK.
+     * Version number of the Tools4Schools PHP SDK.
+     *
+     * @const string
      */
-    const VERSION = '0.0.1';
+    const VERSION = '0.0.2';
 
     /**
-     * @const string Default API version for requests.
+     * Default API version for requests.
+     *
+     * @const string
      */
     const DEFAULT_API_VERSION = 'v1';
 
     /**
-     * @const string The name of the environment variable that contains the app ID.
-     */
-    const APP_ID_ENV_NAME = 'TOOLS4SCHOOLS_APP_ID';
-    /**
-     * @const string The name of the environment variable that contains the app secret.
-     */
-    const APP_SECRET_ENV_NAME = 'TOOLS4SCHOOLS_APP_SECRET';
-
-
-    /**
-     * @const string Production API URL.
+     * The url to the production server
+     *
+     * @const string
      */
     const BASE_API_URL = 'https://api.tools4schools.ie';
 
     /**
-     * @const string Beta API URL.
+     * The url to the staging server
+     *
+     * @const string
      */
     const BASE_API_URL_BETA = 'https://staging.api.tools4schools.ie';
 
     /**
-     * @const int The timeout in seconds for a normal request.
-     */
-    const DEFAULT_REQUEST_TIMEOUT = 60;
-
-    /**
-     * @var bool Toggle to use beta api url.
+     * Toggle to use staging api url.
+     *
+     * @var bool
      */
     protected $enableBetaMode = false;
 
-
     /**
-     * @var \GuzzleHttp\Client the graph client
+     * The main guzzle connection
+     *
+     * @var \GuzzleConnection the graph client
      */
-    protected $client;
+    protected $connection;
 
     /**
+     * The oauth2 client to handle authentication requests
+     *
      * @var Oauth2\Client the Oauth2 Client
      */
     protected $oauth2Client;
 
-    protected $config;
-
     /**
-     * Tools4Schools constructor.
-     * @param $accessToken
-     * @param bool $enableBeta
+     * List of configure values
+     *
+     * @var array
      */
+    protected $config = [];
 
     public function __construct(array $config = [])
     {
+
         $this->config = array_merge([
-            'app_id' =>getenv(static::APP_ID_ENV_NAME),
-            'app_secret' => getenv(static::APP_SECRET_ENV_NAME),
+            //'app_id' => getenv(static::APP_ID_ENV_NAME),
+            //'app_secret' => getenv(static::APP_SECRET_ENV_NAME),
             'default_api_version' => static::DEFAULT_API_VERSION,
-            'enable_beta_mode' =>false,
-        ],$config);
+            'enable_beta_mode' => false,
+        ], $config);
 
-        if(!$this->config['app_id'])
-        {
-            // throw new exception
-        }
+        $this->config['base_uri'] = $this->getBaseApiUrl();
 
-        if(!$this->config['app_secret'])
-        {
-            // throw new exception
-        }
+        $this->connection = new GuzzleConnection($this->config);
+
+        $this->oauth2Client = new Oauth2Client($this->config);
+
+        $this->connection->addMiddleware(new AuthTokenMiddleware($this->oauth2Client));
 
 
-        //$this->enableBetaMode = $enableBeta;
+        Model::setConnection($this->connection);
 
-        $this->client = new GuzzleConnection($this->getBaseApiUrl(),static::DEFAULT_API_VERSION,$this->config);
-        Model::setConnection($this->client);
-    }
 
-    /**
-     * Toggle beta mode.
-     *
-     * @param boolean $betaMode
-     */
-    public function enableBetaMode($betaMode = true)
-    {
-        $this->config['enable_beta_mode'] = $betaMode;
     }
 
 

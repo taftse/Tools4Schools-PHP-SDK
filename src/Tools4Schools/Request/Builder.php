@@ -2,35 +2,39 @@
 /**
  * Created by PhpStorm.
  * User: Timothy
- * Date: 24/06/2018
- * Time: 17:59
+ * Date: 29/06/2018
+ * Time: 19:00
  */
 
 namespace Tools4Schools\SDK\Request;
 
-use GuzzleHttp\Psr7\Request as GuzzleRequest;
-
+use GuzzleHttp\Psr7\Request;
 use Tools4Schools\SDK\ConnectionInterface;
+use Tools4Schools\SDK\Request\Processors\Processor;
 
 class Builder
 {
+
     /**
-     * The endpoint which the request is targeting.
+     * The api connection instance.
+     *
+     * @var \Tools4Schools\SDK\ConnectionInterface
+     */
+    public $connection;
+
+    /**
+     * The api request post processor instance.
+     *
+     * @var \Tools4Schools\SDK\Request\Processors\Processor
+     */
+    public $processor;
+
+    /**
+     * The endpoint for the request
      *
      * @var string
      */
     protected $endpoint;
-
-
-    /**
-     * @var array The headers to send with this request.
-     */
-    protected $headers = [];
-    /**
-     * @var array The parameters to send with this request.
-     */
-    protected $params = [];
-
 
     /**
      * The columns that should be returned.
@@ -39,66 +43,69 @@ class Builder
      */
     public $columns;
 
-
-    /**
-     * Create a new request builder instance.
-     *
-     * @param  \Tools4Schools\SDK\ConnectionInterface  $connection
-     * @return void
-     */
-    public function __construct(ConnectionInterface $connection)
+    public function __construct(ConnectionInterface $connection,Processor $processor = null)
     {
         $this->connection = $connection;
+        $this->processor = $processor ?: $connection->getPostProcessor();
     }
 
     /**
-     * Set the endpoint which the request is targeting.
-     *
-     * @param  string  $endpoint
-     * @return $this
-     */
-    public function endpoint($endpoint)
-    {
-        $this->endpoint = $endpoint;
-        return $this;
-    }
-
-    /**
-     * Execute the request as a get request.
+     * Execute the query as a "select" statement.
      *
      * @param  array  $columns
      * @return \Illuminate\Support\Collection
      */
     public function get($columns = ['*'])
     {
-
-        /*$original = $this->columns;
-
-        if (is_null($original)) {
-            $this->columns = $columns;
-        }
-
-        //$results = $this->processor->processGet($this, $this->runSelect());*/
-        $results = $this->send('GET');
-       // $this->columns = $original;
-
-        return collect($results);
+        return collect($this->onceWithColumns($columns, function () {
+            return $this->processor->processGet($this, $this->executeGet());
+        }));
     }
-
     /**
-     * send the request as a get request against the connection.
+     * Run the query as a "select" statement against the connection.
      *
      * @return array
      */
-    protected function send($method = 'GET')
+    // runSelect
+    protected function executeGet()
     {
-        return $this->connection->execute($this->getRequest($method));
+        return $this->connection->get($this->getRequest());
     }
 
-    protected function getRequest($method)
+    /**
+     * Execute the given callback while selecting the given columns.
+     *
+     * After running the callback, the columns are reset to the original value.
+     *
+     * @param  array  $columns
+     * @param  callable  $callback
+     * @return mixed
+     */
+    protected function onceWithColumns($columns, $callback)
     {
-        return new GuzzleRequest($method,$this->endpoint);
+        $original = $this->columns;
+        if (is_null($original)) {
+            $this->columns = $columns;
+        }
+        $result = $callback();
+        $this->columns = $original;
+        return $result;
+    }
+
+    protected function getRequest()
+    {
+        return new Request('GET',$this->getEndpoint());
     }
 
 
+    public function setEndpoint($endpoint)
+    {
+        $this->endpoint = $endpoint;
+        return $this;
+    }
+
+    public function getEndpoint()
+    {
+        return $this->endpoint;
+    }
 }

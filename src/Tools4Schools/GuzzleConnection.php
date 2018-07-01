@@ -2,8 +2,8 @@
 /**
  * Created by PhpStorm.
  * User: Timothy
- * Date: 24/06/2018
- * Time: 18:46
+ * Date: 29/06/2018
+ * Time: 19:11
  */
 
 namespace Tools4Schools\SDK;
@@ -11,25 +11,13 @@ namespace Tools4Schools\SDK;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
-use League\OAuth2\Client\Token\AccessToken;
-use Tools4Schools\SDK\Oauth2\TokenMiddleware;
+
 
 class GuzzleConnection implements ConnectionInterface
 {
+    protected $handlers;
 
-    /**
-     * The active guzzle Client connection.
-     *
-     * @var \Client|\Closure
-     */
-    protected $client;
-
-    /**
-     * The base_url for the api.
-     *
-     * @var string
-     */
-    protected $base_url;
+    protected $config;
 
     /**
      * The api version to target.
@@ -38,105 +26,58 @@ class GuzzleConnection implements ConnectionInterface
      */
     protected $apiVersion = '';
 
-    /**
-     * The guzzle client configuration options.
-     *
-     * @var array
-     */
-    protected $config = [];
-
-    protected $defaultAccessToken;
-
-
-    /**
-     * Create a new api connection instance.
-     *
-     * @param  string $base_url
-     * @param  string $apiVersion
-     * @param  array $config
-     * @return void
-     */
-    public function __construct($base_url = '', $apiVersion = '', array $config = [])
+    public function __construct(array $config = [])
     {
-
-
-        // First we will setup the default properties. We keep track of the DB
-        // name we are connected to since it is needed when some reflective
-        // type commands are run such as checking whether a table exists.
-        $this->base_url = $base_url;
-
-        $this->apiVersion = $apiVersion;
-
-        $this->config = $config;
+        $this->handlers =  HandlerStack::create();
 
 
         if (isset($config['default_access_token'])) {
-            $this->setDefaultAccessToken($config['default_access_token']);
+            //$this->setDefaultAccessToken($config['default_access_token']);
         }
 
-        // We need to initialize a query grammar and the query post processors
-        // which are both very important parts of the database abstractions
-        // so we initialize these to their default values while starting.
-        // $this->useDefaultQueryGrammar();
-
-        //$this->useDefaultPostProcessor();
-
-
-    }
-
-    /**
-     * Sets the default access token to use with requests.
-     *
-     * @param AccessToken|string $accessToken The access token to save.
-     *
-     * @throws \InvalidArgumentException
-     */
-    public function setDefaultAccessToken($accessToken)
-    {
-        if (is_string($accessToken)) {
-            $this->defaultAccessToken = new AccessToken(['access_token'=>$accessToken,'expires_in'=>1]);
-            return;
-        }
-        if ($accessToken instanceof AccessToken) {
-            $this->defaultAccessToken = $accessToken;
-            return;
-        }
-        throw new \InvalidArgumentException('The default access token must be of type "string" or Tools4Schools\SDK\Oauth2\AccessToken');
-    }
-
-    public function getDefaultAccessToken()
-    {
-        return $this->defaultAccessToken;
-    }
-
-
-    public function execute(Request $request)
-    {
-        //return $this->getClient()->send($request);
-        $response = $this->getClient()->send($request);
-        dd($response->getStatusCode());
-    }
-
-    protected function getClient()
-    {
-        $stack = HandlerStack::create();
-
-        if(isset($this->config['middleware'])) {
-            foreach ($this->config['middleware'] as $middleware) {
-                $stack->push($middleware);
+        if(isset($config['middleware']))
+        {
+            foreach ($config['middleware'] as $middleware)
+            {
+                if(is_string($middleware))
+                {
+                    $middleware = new $middleware;
+                }
+                $this->addMiddleware($middleware);
             }
+            unset($config['middleware']);
         }
-        $client = new Client([
-            'base_uri' => $this->base_url . '/' . $this->apiVersion . '/',
+
+        $this->config = $config;
+
+    }
+
+    public function addMiddleware(callable $middleware)
+    {
+        $this->handlers->push($middleware);
+        return $this;
+    }
+
+    protected function createClient()
+    {
+        return new Client([
+            'handler' => $this->handlers,
+            'base_uri'=> $this->config['base_uri'].'/' . $this->config['default_api_version'] . '/',
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
             ],
-            'handler' => $stack,
         ]);
+    }
 
-        $stack->push(new TokenMiddleware($this, $this->config));
-        return $client;
+    public function setApplication($app_id,$app_secret)
+    {
+        $this->config['app_id'] = $app_id;
+        $this->config['app_secret'] = $app_secret;
+    }
+
+    public function get(Request $request)
+    {
+        return $this->createClient()->send($request);
     }
 }
-

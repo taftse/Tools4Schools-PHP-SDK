@@ -25,7 +25,7 @@ class ModelsGraphModelTest extends TestCase
 
         new Tools4Schools([
             'enable_beta_mode'=>true,
-            'default_access_token'=>$this->accessToken
+            'access_token'=>$this->accessToken
         ]);
     }
 
@@ -65,16 +65,7 @@ class ModelsGraphModelTest extends TestCase
         }
     }
 
-    public function testAllModel()
-    {
-        $model = new GraphModelStub;
-        $model->setEndpoint('user');
-        try{
-            $model->all();
-        }catch (Exception $e) {
-            dd($e);
-        }
-    }
+
 }
 
 class GraphModelStub extends Model {

@@ -2,16 +2,14 @@
 /**
  * Created by PhpStorm.
  * User: Timothy
- * Date: 24/06/2018
- * Time: 18:29
+ * Date: 29/06/2018
+ * Time: 19:09
  */
 
 namespace Tools4Schools\SDK;
 
 
-use GuzzleHttp\Psr7\Request;
-
 interface ConnectionInterface
 {
-    public function execute(Request $request);
+
 }

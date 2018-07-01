@@ -2,127 +2,194 @@
 /**
  * Created by PhpStorm.
  * User: Timothy
- * Date: 29/06/2018
- * Time: 14:09
+ * Date: 30/06/2018
+ * Time: 14:32
  */
 
 namespace Tools4Schools\SDK\Oauth2;
 
-use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+
+use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\Request;
 use League\OAuth2\Client\Token\AccessToken;
-use League\OAuth2\Client\Provider\AbstractProvider;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Tools4Schools\SDK\Tools4Schools;
 
-class Client extends AbstractProvider
+class Client implements CredentialFetcherInterface
 {
+    protected $client;
+
+    protected $tokenUrl = 'https://login.tools4schools.ie/oauth/token';
+
+    protected $config;
+
+    protected $grantType;
 
     /**
-     * Returns the base URL for authorizing a client.
+     * @var AccessToken
+     */
+    protected $token;
+
+    public function __construct(array $config = [])
+    {
+        $this->config = $config;
+
+        $this->client = new GuzzleClient();
+
+        if(isset($config['token_url']))
+        {
+            $this->tokenUrl = $config['token_url'];
+        }
+
+        if(isset($config['grant_type']))
+        {
+            $this->grantType = $config['grant_type'];
+        }
+
+        if(isset($config['access_token']))
+        {
+            $this->token = new AccessToken(['access_token' =>$config['access_token'] ]);
+        }
+    }
+
+    /**
+     * Fetches the auth tokens based on the current state.
      *
-     * Eg. https://oauth.service.com/authorize
+     * @return array the response
+     */
+    public function fetchAuthToken(callable $httpHandler = null)
+    {
+        if(isset($this->token))
+        {
+            return $this->token->getToken();
+        }
+        $response = $this->client->send($this->generateCredentialRequest());
+        $credentials = $this->parseResponse($response);
+        $this->updateToken($credentials);
+
+        return$credentials;
+    }
+
+    /**
+     * Generates a request for token credentials.
+     *
+     * @return RequestInterface the authorization Url.
+     */
+    public function generateCredentialRequest()
+    {
+
+        $grantType = $this->getGrantType();
+        $params = array('grant_type' => $grantType);
+        switch ($grantType){
+            case 'authorization_code':
+                $params['code'] = $this->config['code'];
+                $params['redirect_uri'] = $this->config['redirect_url'];
+                $this->addClientCredentials($params);
+                break;
+            case 'password':
+                $params['username'] = $this->config['username'];
+                $params['password'] = $this->config['password'];
+                $this->addClientCredentials($params);
+                break;
+            case 'refresh_token':
+                $params['refresh_token'] = $this->config['refresh_token']();
+                $this->addClientCredentials($params);
+                break;
+            default:
+                throw new \DomainException('Unsupported Grant type');
+                break;
+        };
+
+        $headers = [
+            'Cache-Control' => 'no-store',
+            'Content-Type' => 'application/x-www-form-urlencoded',
+        ];
+
+        return new Request(
+            'POST',
+            $this->getTokenUrl(),
+            $headers,
+            Psr7\build_query($params)
+        );
+
+    }
+
+    /**
+     * Get the token URL for the provider.
      *
      * @return string
      */
-    public function getBaseAuthorizationUrl()
-    {
-        return Tools4Schools::getBaseURL().'/authorize';
+    protected function getTokenUrl(){
+        return $this->tokenUrl;
     }
+
     /**
-     * Returns the base URL for requesting an access token.
-     *
-     * Eg. https://oauth.service.com/token
-     *
      * @param array $params
-     *
-     * @return string
-     */
-    public function getBaseAccessTokenUrl(array $params)
-    {
-        return 'https://' . static::OAUTH_HOSTNAME . '/token';
-    }
-    /**
-     * Returns the URL for requesting the resource owner's details.
-     *
-     * @param AccessToken $token
-     *
-     * @return string
-     */
-    public function getResourceOwnerDetailsUrl(AccessToken $token)
-    {
-        throw new \BadMethodCallException('Method not implemented.');
-    }
-    /**
-     * Returns the default scopes used by this provider.
-     *
-     * This should only be the scopes that are required to request the details
-     * of the resource owner, rather than all the available scopes.
      *
      * @return array
      */
-    protected function getDefaultScopes()
+    private function addClientCredentials(&$params)
     {
-        return [];
-    }
-    /**
-     * Checks a provider response for errors.
-     *
-     * @param ResponseInterface $response
-     * @param array|string      $data     Parsed response data
-     *
-     * @throws IdentityProviderException If parsed response data contains an error.
-     */
-    protected function checkResponse(ResponseInterface $response, $data)
-    {
-        $message = $this->getErrorMessage($data);
-        if (!empty($message)) {
-            throw new IdentityProviderException(
-                $message,
-                $response->getStatusCode(),
-                $response
-            );
+        $clientId = $this->config['client_id'];
+        $clientSecret = $this->config['client_secret'];
+        if ($clientId && $clientSecret) {
+            $params['client_id'] = $clientId;
+            $params['client_secret'] = $clientSecret;
         }
+        return $params;
     }
+
     /**
-     * Returns error message if any, otherwise null.
+     * Gets the current grant type.
      *
-     * @param array $parsedResponse
-     *
-     * @return string|null
+     * @return string
      */
-    private function getErrorMessage(array $parsedResponse)
+    public function getGrantType()
     {
-        if ($this->responseHasError($parsedResponse)) {
-            return !empty($parsedResponse['exception']) ?
-                $parsedResponse['exception']
-                : $parsedResponse['error_description'];
+
+        if (!is_null($this->grantType)) {
+            return $this->grantType;
         }
+        // Returns the inferred grant type, based on the current object instance
+        // state.
+        if (isset($this->config['code']) && !is_null($this->config['code'])) {
+            return 'authorization_code';
+        }
+        if (isset($this->config['refresh_token']) && !is_null($this->config['refresh_token'])) {
+            return 'refresh_token';
+        }
+        if (isset($this->config['username']) && !is_null($this->config['username']) && isset($this->config['password']) && !is_null($this->config['password'])) {
+            return 'password';
+        }
+
         return null;
     }
+
     /**
-     * Returns true if response has any error.
+     * Parses the fetched tokens.
      *
-     * @param array $parsedResponse
+     * @param ResponseInterface $resp the response.
      *
-     * @return bool
+     * @return array the tokens parsed from the response body.
+     *
+     * @throws \Exception
      */
-    private function responseHasError(array $parsedResponse)
+    public function parseResponse(ResponseInterface $resp)
     {
-        return !empty($parsedResponse['exception']) ||
-            !empty($parsedResponse['error_description']);
-    }
-    /**
-     * Generates a resource owner object from a successful resource owner
-     * details request.
-     *
-     * @param array       $response
-     * @param AccessToken $token
-     *
-     * @return ResourceOwnerInterface
-     */
-    protected function createResourceOwner(array $response, AccessToken $token)
-    {
-        return new Tools4SchoolsResourceOwner($response);
+        $body = (string)$resp->getBody();
+        if ($resp->hasHeader('Content-Type') &&
+            $resp->getHeaderLine('Content-Type') == 'application/x-www-form-urlencoded'
+        ) {
+            $res = array();
+            parse_str($body, $res);
+            return $res;
+        }
+        // Assume it's JSON; if it's not throw an exception
+        if (null === $res = json_decode($body, true)) {
+            throw new \Exception('Invalid JSON response');
+        }
+        return $res;
     }
 
 }
