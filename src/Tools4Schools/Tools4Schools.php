@@ -71,6 +71,13 @@ class Tools4Schools
      */
     protected $config = [];
 
+    /**
+     * A tenants uuid
+     *
+     * @var string
+     */
+    protected $tenant;
+
     public function __construct(array $config = [])
     {
 
@@ -105,4 +112,7 @@ class Tools4Schools
     {
         return $this->config['enable_beta_mode'] ? static::BASE_API_URL_BETA : static::BASE_API_URL;
     }
+
+
+
 }

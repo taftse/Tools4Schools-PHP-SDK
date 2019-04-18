@@ -8,6 +8,7 @@
 
 namespace Tools4Schools\SDK\Models;
 
+use Tools4Schools\SDK\Graph\Model as GraphModel;
 
 class User Extends GraphModel
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tools4Schools\SDK\Tests;
+namespace Tools4Schools\Tests\SDK;
 
 
 use PHPUnit\Framework\TestCase;

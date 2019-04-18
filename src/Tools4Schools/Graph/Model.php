@@ -1,10 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Timothy
- * Date: 29/06/2018
- * Time: 18:47
- */
+
 
 namespace Tools4Schools\SDK\Graph;
 
