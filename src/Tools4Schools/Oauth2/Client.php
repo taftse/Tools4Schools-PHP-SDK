@@ -64,6 +64,12 @@ class Client implements CredentialFetcherInterface
         {
             return $this->token->getToken();
         }
+
+        if(isset($this->config['access_token']))
+        {
+            return $this->config['access_token'];
+        }
+
         $response = $this->client->send($this->generateCredentialRequest());
         $credentials = $this->parseResponse($response);
         $this->updateToken($credentials);
@@ -84,7 +90,7 @@ class Client implements CredentialFetcherInterface
         switch ($grantType){
             case 'authorization_code':
                 //$params['code'] = $this->config['code'];
-                $params['redirect_uri'] = $this->config['redirect_url'];
+                $params['redirect_uri'] = $this->config['redirect'];
                 $this->addClientCredentials($params);
                 break;
             case 'password':
