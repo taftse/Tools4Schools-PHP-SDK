@@ -24,7 +24,7 @@ class Client implements CredentialFetcherInterface
 
     protected $config;
 
-    protected $grantType = 'code';
+    protected $grantType = 'authorization_code';
 
     /**
      * @var AccessToken
