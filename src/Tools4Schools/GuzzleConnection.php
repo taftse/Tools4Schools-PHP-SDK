@@ -63,7 +63,7 @@ class GuzzleConnection implements ConnectionInterface
     {
         return new Client([
             'handler' => $this->handlers,
-            'base_uri'=> $this->config['base_uri'].'/' . $this->config['default_api_version'] . '/',
+            'base_uri'=> $this->config['base_uri'].'/' . $this->config['default_graph_version'] . '/',
             'headers' => [
                 'User-Agent' => 'Tools4Schools PHP SDK v'.Tools4Schools::VERSION,
                 'Accept' => 'application/json',
