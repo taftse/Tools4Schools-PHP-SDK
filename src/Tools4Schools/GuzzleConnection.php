@@ -11,6 +11,7 @@ namespace Tools4Schools\SDK;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
+use Tools4Schools\SDK\Request\Processors\Processor;
 
 
 class GuzzleConnection implements ConnectionInterface
@@ -80,5 +81,10 @@ class GuzzleConnection implements ConnectionInterface
     public function get(Request $request)
     {
         return $this->createClient()->send($request);
+    }
+
+    public function getPostProcessor()
+    {
+       return new Processor();
     }
 }

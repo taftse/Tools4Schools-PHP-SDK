@@ -154,4 +154,42 @@ class Model
         //$model->fireModelEvent('retrieved', false);
         return $model;
     }
+
+    /**
+     * Save the model to the api.
+     *
+     * @param  array  $options
+     * @return bool
+     */
+    public function save(array $options = [])
+    {
+        // If the model already exists on the graph then we can just update the record
+        // that is already in the graph using the current IDs in this "where"
+        // clause to only update this model. Otherwise, we'll just insert them.
+        if ($this->exists) {
+
+            // if model has been edited
+            if($this->isDirty()){
+                // send a put or patch request
+                $saved =  $this->preformUpdate($query);
+            }
+            $saved =  true;
+
+        }
+        // If the model is brand new, we'll insert it into our database and set the
+        // ID attribute on the model to the value of the newly inserted row's ID
+        // which is typically an auto-increment value managed by the database.
+        else{
+            // send a post request
+            $saved = $this->preformInsert($query);
+
+        }
+
+        if($saved)
+        {
+            // finish saved
+        }
+
+        return $saved;
+    }
 }

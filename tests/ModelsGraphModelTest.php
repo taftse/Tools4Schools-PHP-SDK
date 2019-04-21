@@ -68,6 +68,6 @@ class ModelsGraphModelTest extends TestCase
 
 }
 
-class GraphModelStub extends \Tools4Schools\SDK\Graph\Model {
+class GraphModelStub extends Model {
     protected $endpoint = 'stub';
 }

@@ -11,5 +11,5 @@ namespace Tools4Schools\SDK;
 
 interface ConnectionInterface
 {
-
+    public function getPostProcessor();
 }
