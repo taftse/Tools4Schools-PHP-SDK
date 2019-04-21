@@ -27,7 +27,7 @@ class Tools4Schools
      *
      * @const string
      */
-    const DEFAULT_API_VERSION = 'v1';
+    const DEFAULT_GRAPH_VERSION = 'v0.1';
 
     /**
      * The url to the production server
@@ -82,9 +82,7 @@ class Tools4Schools
     {
 
         $this->config = array_merge([
-            //'app_id' => getenv(static::APP_ID_ENV_NAME),
-            //'app_secret' => getenv(static::APP_SECRET_ENV_NAME),
-            'default_api_version' => static::DEFAULT_API_VERSION,
+            'default_graph_version' => static::DEFAULT_API_VERSION,
             'enable_beta_mode' => false,
         ], $config);
 
