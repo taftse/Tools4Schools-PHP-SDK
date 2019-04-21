@@ -72,10 +72,10 @@ class GuzzleConnection implements ConnectionInterface
         ]);
     }
 
-    public function setApplication($app_id,$app_secret)
+    public function setApplication($client_id,$client_secret)
     {
-        $this->config['app_id'] = $app_id;
-        $this->config['app_secret'] = $app_secret;
+        $this->config['client_id'] = $client_id;
+        $this->config['client_secret'] = $client_secret;
     }
 
     public function get(Request $request)
