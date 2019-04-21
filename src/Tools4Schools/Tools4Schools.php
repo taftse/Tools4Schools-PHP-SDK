@@ -111,6 +111,7 @@ class Tools4Schools
         return $this->config['enable_beta_mode'] ? static::BASE_API_URL_BETA : static::BASE_API_URL;
     }
 
-
-
+    public function setAccessToken($access_token){
+        $this->config['access_token'] = $access_token;
+    }
 }
