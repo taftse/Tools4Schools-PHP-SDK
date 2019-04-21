@@ -83,7 +83,7 @@ class Client implements CredentialFetcherInterface
         $params = array('grant_type' => $grantType);
         switch ($grantType){
             case 'authorization_code':
-                $params['code'] = $this->config['code'];
+                //$params['code'] = $this->config['code'];
                 $params['redirect_uri'] = $this->config['redirect_url'];
                 $this->addClientCredentials($params);
                 break;
