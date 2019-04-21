@@ -82,7 +82,7 @@ class Tools4Schools
     {
 
         $this->config = array_merge([
-            'default_graph_version' => static::DEFAULT_API_VERSION,
+            'default_graph_version' => static::DEFAULT_GRAPH_VERSION,
             'enable_beta_mode' => false,
         ], $config);
 
